@@ -42,7 +42,7 @@ module Kafka
     #   broker. Default is 10 seconds.
     #
     # @return [Connection] a new connection.
-    def initialize(host:, port:, client_id:, logger:, instrumenter:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil)
+    def initialize(host:, port:, client_id:, logger:, instrumenter:, connect_timeout: nil, socket_timeout: nil, ssl_context: nil, sasl_user: nil, sasl_password: nil)
       @host, @port, @client_id = host, port, client_id
       @logger = logger
       @instrumenter = instrumenter
@@ -50,6 +50,8 @@ module Kafka
       @connect_timeout = connect_timeout || CONNECT_TIMEOUT
       @socket_timeout = socket_timeout || SOCKET_TIMEOUT
       @ssl_context = ssl_context
+      @sasl_user = sasl_user
+      @sasl_password = sasl_password
     end
 
     def to_s
@@ -66,6 +68,10 @@ module Kafka
       @socket.close if @socket
 
       @socket = nil
+    end
+
+    def authenticated?
+      @sasl_user.nil? || @authenticated
     end
 
     # Sends a request over the connection.
@@ -85,6 +91,7 @@ module Kafka
 
       @instrumenter.instrument("request.connection", notification) do
         open unless open?
+        authenticate unless authenticated?
 
         @correlation_id += 1
 
@@ -121,6 +128,18 @@ module Kafka
     rescue SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
       @logger.error "Failed to connect to #{self}: #{e}"
       raise ConnectionError, e
+    end
+
+    # Initiates SASL/Plain authentication
+    def authenticate
+      return unless @sasl_user
+      @authenticated = :in_progress
+      @logger.debug "Authenticating: SASL handshake"
+      send_request(Kafka::Protocol::SaslHandshakeRequest.new(mechanism: 'PLAIN'))
+      @logger.debug "Authenticating: sending SASL/Plain credentials for user #{@sasl_user}"
+      @encoder.write_bytes([nil, @sasl_user, @sasl_password].join("\x00"))
+      @logger.debug "Authenticating: success "+ @decoder.read(4).inspect
+      @authenticated = true
     end
 
     # Writes a request over the connection.

@@ -41,7 +41,7 @@ module Kafka
     #   SSL connection. Must be used in combination with ssl_client_cert.
     #
     # @return [Client]
-    def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil)
+    def initialize(seed_brokers:, client_id: "ruby-kafka", logger: nil, connect_timeout: nil, socket_timeout: nil, ssl_ca_cert: nil, ssl_client_cert: nil, ssl_client_cert_key: nil, sasl_user: nil, sasl_password: nil)
       @logger = logger || Logger.new(nil)
       @instrumenter = Instrumenter.new(client_id: client_id)
       @seed_brokers = normalize_seed_brokers(seed_brokers)
@@ -53,6 +53,8 @@ module Kafka
         connect_timeout: connect_timeout,
         socket_timeout: socket_timeout,
         ssl_context: ssl_context,
+        sasl_user: sasl_user,
+        sasl_password: sasl_password,
         logger: @logger,
         instrumenter: @instrumenter,
       )

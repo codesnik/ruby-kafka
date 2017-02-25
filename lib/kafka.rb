@@ -121,6 +121,12 @@ module Kafka
   class InvalidSessionTimeout < ProtocolError
   end
 
+  class UnsupportedSaslMechanism < ProtocolError
+  end
+
+  class IllegalSaslState < ProtocolError
+  end
+
   # Raised when there's a network connection error.
   class ConnectionError < Error
   end

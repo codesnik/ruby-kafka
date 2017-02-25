@@ -41,6 +41,8 @@ module Kafka
       25 => UnknownMemberId,
       26 => InvalidSessionTimeout,
       27 => RebalanceInProgress,
+      33 => UnsupportedSaslMechanism,
+      34 => IllegalSaslState,
     }
 
     def self.handle_error(error_code)
@@ -81,3 +83,5 @@ require "kafka/protocol/offset_fetch_request"
 require "kafka/protocol/offset_fetch_response"
 require "kafka/protocol/offset_commit_request"
 require "kafka/protocol/offset_commit_response"
+require "kafka/protocol/sasl_handshake_request"
+require "kafka/protocol/sasl_handshake_response"
